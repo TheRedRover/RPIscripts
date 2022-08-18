@@ -1,0 +1,3 @@
+adafruit-circuitpython-dht
+raspberrypi-tm1637
+psutil
