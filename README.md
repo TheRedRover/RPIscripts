@@ -4,7 +4,7 @@
 
 ### Install
 ```
-pip install -r requirments.txt
+pip install -r requirements.txt
 sudo apt install libgpiod2
 ```
 ### Running
