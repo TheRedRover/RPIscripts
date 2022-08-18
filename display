@@ -1,0 +1,71 @@
+import time
+import board
+import adafruit_dht
+import psutil
+import tm1637
+import datetime
+
+for proc in psutil.process_iter():
+    if proc.name() == 'libgpiod_pulsein' or proc.name() == 'libgpiod_pulsei':
+        proc.kill()
+
+charset={'0':63, '1':6, '2':91, '3':79,'4':102,'5':109,'6':125,'7':7,'8':127,'9':111,'degree':99,'C':57,'H':118}
+
+sensor = adafruit_dht.DHT11(board.D4)
+display = tm1637.TM1637(clk=21, dio=20)
+
+display.write([charset['8'],charset['8']+128,charset['8'],charset['8']])
+now = datetime.datetime.now()
+while True:
+    try:
+        t_end = time.time() + 5
+        while time.time() < t_end:
+            now = datetime.datetime.now()
+            curhour = str(now.hour)
+            curminute = str(now.minute)
+            if int(curhour) < 10:
+                if int(curminute) < 10:
+                    display.write([charset['0'],charset[curhour]+128,charset['0'],charset[curminute]])
+                else:
+                    display.write([charset['0'],charset[curhour]+128,charset[curminute[0]],charset[curminute[1]]])
+            else:
+                if int(curminute) < 10: 
+                    display.write([charset[curhour[0]],charset[curhour[1]]+128,charset['0'],charset[curminute]])
+                else:
+                    minute = str(curminute)
+                    display.write([charset[curhour[0]],charset[curhour[1]]+128,charset[minute[0]],charset[minute[1]]])
+            time.sleep(0.5)
+        temp = sensor.temperature
+        t_end = time.time() + 5
+        while  time.time() < t_end:
+            if int(temp) < 10 and int(temp) > 0:
+                display.write([0,charset[temp],charset['degree'],charset['C']])
+            elif int(temp) >= 10:
+                temp = str(temp)
+                display.write([charset[temp[0]],charset[temp[1]],charset['degree'],charset['C']])
+            time.sleep(0.5)
+        humidity = sensor.humidity
+        t_end = time.time() + 5
+        while  time.time() < t_end:
+            if int(humidity) < 10:
+                display.write([0,charset[humidity],0, 0])
+            elif int(humidity) < 100:
+                hum = str(humidity)
+                display.write([0,charset[hum[0]],charset[hum[1]],0])
+            else:
+                hum = str(humidity)
+                display.write([0,charset[hum[0]],charset[hum[1]],charset[hum[3]]])
+            time.sleep(0.5)
+            
+
+
+    except RuntimeError as error:
+        continue
+    except Exception as error:
+        sensor.exit()
+        raise error
+    time.sleep(2.0)
+
+
+#TODO
+#CHECK IF PROCESS EXISTS. KILL libgpiod_pulsein

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -m
+
+DISPLAY="/home/theredrover/scripts/display"
+RUN_DIR="/home/theredrover/scripts/display.d"
+LOCK_FILE="$RUN_DIR/display.lock"
+PID_FILE="$RUN_DIR/display.pid"
+
+mkdir -p "$RUN_DIR"
+
+start() {
+  local PID
+  touch "$LOCK_FILE"
+  while [ -f $LOCK_FILE ]; do
+    python3 "$DISPLAY" 
+  done &
+  PID=$!
+  echo "$PID" > "$PID_FILE"
+}
+
+stop() {
+  local PID
+  PID=$(<"$PID_FILE")
+  rm -f "$LOCK_FILE"
+  kill -TERM "-$PID"
+  rm -rf "$RUN_DIR" &> /dev/null
+}
+
+case "$1" in
+  start)
+	  start
+	  ;;
+  stop)
+	  stop
+	  ;;
+  restart)
+	  stop
+	  start
+          ;;
+esac
+
+exit 0
